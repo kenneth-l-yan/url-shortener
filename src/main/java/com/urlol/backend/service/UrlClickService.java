@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.urlol.backend.model.GeolocationDataDTO;
 import com.urlol.backend.model.Url;
 import com.urlol.backend.model.UrlClick;
 import com.urlol.backend.repository.UrlClickRepository;
@@ -38,12 +39,20 @@ public class UrlClickService {
 
         UrlClick newUrlClick = new UrlClick();
         String ipAddress = getIPAddress(request);
-        String geolocationData = getGeolocation(ipAddress).block();
+        GeolocationDataDTO geolocationData = getGeolocation(ipAddress).block();
 
         newUrlClick.setUrl(url);
         newUrlClick.setTimestamp(LocalDateTime.now());
         newUrlClick.setIpAddress(ipAddress);
+        
         // Set newUrlClick properties from geolocationData.
+        if (geolocationData != null) {
+            newUrlClick.setCity(geolocationData.getCity());
+            newUrlClick.setCountry(geolocationData.getCountry());
+            newUrlClick.setContinent(geolocationData.getContinent());
+            newUrlClick.setRegion(geolocationData.getRegion());
+            newUrlClick.setCountryEmoji(geolocationData.getFlag().getEmoji());
+        }
         
         url.setNumberOfClicks(url.getNumberOfClicks() + 1);
         url.getUrlClicks().add(newUrlClick);
@@ -74,12 +83,12 @@ public class UrlClickService {
         return ipAddress;
     }
 
-    private Mono<String> getGeolocation(String ipAddress) {
+    private Mono<GeolocationDataDTO> getGeolocation(String ipAddress) {
         return webClient.get()
                 .uri(API_URL + API_KEY + "&ip_address=" + ipAddress)
                 .retrieve()
-                .bodyToMono(String.class)
-                .onErrorReturn("Unable to fetch geolocation data");
+                .bodyToMono(GeolocationDataDTO.class)
+                .onErrorReturn(new GeolocationDataDTO());
     }
 
 }

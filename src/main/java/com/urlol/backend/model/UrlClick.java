@@ -23,7 +23,7 @@ public class UrlClick {
     private String country;
     private String region;
     private String city;
-    private String countryPictureUrl;
+    private String countryEmoji;
     private LocalDateTime timestamp;
 
     @ManyToOne
